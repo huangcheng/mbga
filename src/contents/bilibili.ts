@@ -21,7 +21,9 @@ function hideFeed(): void {
       visibility: hidden !important;
     }
   `
-  document.head.appendChild(style)
+  // Use documentElement which always exists, even at document_start
+  const parent = document.head || document.documentElement
+  parent.appendChild(style)
 }
 
 // Show feed after filtering
