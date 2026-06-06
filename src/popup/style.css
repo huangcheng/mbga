@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.popup { width: 320px; background: #fff; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.08); overflow: hidden; }
+.popup-head { display: flex; align-items: center; justify-content: space-between; padding: 20px; background: linear-gradient(135deg, #00a1d6, #00c4e6); color: #fff; }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 32px; height: 32px; background: rgba(255,255,255,.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.logo-text { font-size: 16px; font-weight: 700; }
+.logo-sub { font-size: 11px; opacity: .8; }
+.switch { width: 44px; height: 24px; background: rgba(255,255,255,.3); border-radius: 12px; cursor: pointer; position: relative; }
+.switch::after { content: ''; position: absolute; width: 20px; height: 20px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: transform .2s; }
+.switch.on::after { transform: translateX(20px); }
+.popup-body { padding: 20px; }
+.section { margin-bottom: 20px; }
+.label { font-size: 12px; color: #9499a0; margin-bottom: 10px; }
+.btn-row { display: flex; gap: 8px; }
+.btn { flex: 1; padding: 10px; background: #f1f2f3; border: none; border-radius: 8px; cursor: pointer; }
+.btn.active { background: #e8f4fd; color: #00a1d6; }
+.stats { display: flex; flex-direction: column; gap: 12px; }
+.stat { display: flex; justify-content: space-between; }
+.value { font-weight: 600; }
+.value.accent { color: #00a1d6; }
+.footer { display: block; text-align: center; padding: 16px; color: #00a1d6; text-decoration: none; border-top: 1px solid #e3e5e7; }
