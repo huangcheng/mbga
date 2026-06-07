@@ -1,0 +1,14 @@
+name = "mbga-edge"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+ADMIN_TOKEN = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mbga-db"
+database_id = "YOUR_DATABASE_ID"
+
+[triggers]
+crons = ["0 */6 * * *"]
