@@ -1,5 +1,4 @@
 import { StorageManager } from '../../lib/storage'
-import { extractVideoId, extractCreatorId } from '../../lib/storage'
 
 const storage = new StorageManager()
 
@@ -7,15 +6,20 @@ const storage = new StorageManager()
  * Add MBGA options to Bilibili's "not interested" popup menu
  */
 export function setupQuickBlock(): void {
+  console.log('[MBGA] Quick block setup started')
+  
   // Watch for the popup appearing
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (node instanceof HTMLElement) {
+          // Check for the popup panel
           const popup = node.querySelector?.('.bili-video-card__info--no-interest-panel') 
             || (node.classList?.contains('bili-video-card__info--no-interest-panel') ? node : null)
+            || node.querySelector?.('.vui_popover-content')
           
           if (popup) {
+            console.log('[MBGA] Popup detected, adding options')
             addMBGAOptions(popup as HTMLElement)
           }
         }
@@ -27,15 +31,25 @@ export function setupQuickBlock(): void {
     childList: true,
     subtree: true,
   })
+  
+  console.log('[MBGA] Quick block observer set up')
 }
 
 /**
  * Add MBGA block options to the popup menu
  */
 function addMBGAOptions(panel: HTMLElement): void {
-  // Find the parent card to get video/creator info
-  const card = panel.closest('.bili-video-card, .floor-single-card')
+  console.log('[MBGA] addMBGAOptions called')
+  
+  // The popup is floating, not inside the card
+  // Find the card by looking at what's being hovered/focused
+  const card = findAssociatedCard()
+  console.log('[MBGA] Found card:', !!card)
   if (!card) return
+
+  // Check if already added
+  if ((panel as any).__mbgaAdded) return
+  ;(panel as any).__mbgaAdded = true
 
   // Get video URL
   const link = card.querySelector('a[href*="bilibili.com/video/"], a[href*="live.bilibili.com"]')
@@ -54,18 +68,18 @@ function addMBGAOptions(panel: HTMLElement): void {
   // Get video ID
   const videoId = extractVideoIdFromUrl(fullUrl)
 
-  // Check if already added
-  if (panel.querySelector('.mbga-quick-block')) return
+  console.log('[MBGA] Creator:', authorName, 'ID:', creatorId, 'Video:', videoId)
 
   // Add separator
   const separator = document.createElement('div')
+  separator.className = 'mbga-quick-block'
   separator.style.cssText = 'height: 1px; background: #e3e5e7; margin: 4px 0;'
   panel.appendChild(separator)
 
   // Add "Block UP主" option
   if (creatorId) {
     const blockCreator = createMenuItem(
-      `🚫 屏蔽UP主: ${authorName}`,
+      '🚫 屏蔽UP主',
       () => handleBlockCreator(creatorId, authorName)
     )
     panel.appendChild(blockCreator)
@@ -79,6 +93,35 @@ function addMBGAOptions(panel: HTMLElement): void {
     )
     panel.appendChild(blockVideo)
   }
+}
+
+/**
+ * Find the video card associated with the popup
+ */
+function findAssociatedCard(): HTMLElement | null {
+  // Method 1: Find the last hovered card
+  const hoveredCard = document.querySelector('.bili-video-card:hover, .floor-single-card:hover')
+  if (hoveredCard) return hoveredCard as HTMLElement
+
+  // Method 2: Find the card with the no-interest button visible
+  const visibleButtons = document.querySelectorAll('.bili-video-card__info--no-interest')
+  for (const btn of visibleButtons) {
+    if ((btn as HTMLElement).style.display !== 'none') {
+      return btn.closest('.bili-video-card, .floor-single-card') as HTMLElement
+    }
+  }
+
+  // Method 3: Find any card that has focus or is being interacted with
+  const cards = document.querySelectorAll('.bili-video-card.is-rcmd, .floor-single-card')
+  for (const card of cards) {
+    const rect = card.getBoundingClientRect()
+    // Check if mouse is over this card area
+    if (rect.width > 0 && rect.height > 0) {
+      return card as HTMLElement
+    }
+  }
+
+  return null
 }
 
 /**
