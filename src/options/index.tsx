@@ -19,7 +19,15 @@ function OptionsPage() {
   }
 
   const handleAddType = async (type: string) => {
-    await storage.addTypeFilter({ type: type as any, enabled: true })
+    // Check if filter already exists
+    const existingFilter = profile?.filters.types.find(f => f.type === type)
+    if (existingFilter) {
+      // Toggle off - remove the filter
+      await storage.deleteTypeFilter(existingFilter.id)
+    } else {
+      // Toggle on - add the filter
+      await storage.addTypeFilter({ type: type as any, enabled: true })
+    }
     await loadProfile()
   }
 
@@ -59,9 +67,19 @@ function OptionsPage() {
       <div className="card">
         <h3>屏蔽内容类型</h3>
         <div className="tags">
-          {['video', 'live', 'course', 'bangumi', 'article', 'dynamic', 'ad'].map(type => (
-            <div key={type} className={`tag ${profile.filters.types.some(f => f.type === type) ? 'on' : ''}`} onClick={() => handleAddType(type)}>
-              {type === 'video' ? '视频' : type === 'live' ? '直播' : type === 'course' ? '课堂' : type === 'bangumi' ? '番剧' : type === 'article' ? '专栏' : type === 'dynamic' ? '动态' : '广告'}
+          {[
+            { id: 'video', label: '视频' },
+            { id: 'live', label: '直播' },
+            { id: 'course', label: '课堂' },
+            { id: 'bangumi', label: '番剧' },
+            { id: 'article', label: '专栏' },
+            { id: 'dynamic', label: '动态' },
+            { id: 'ad', label: '广告' },
+            { id: 'esports', label: '赛事' },
+            { id: 'variety', label: '综艺' },
+          ].map(({ id, label }) => (
+            <div key={id} className={`tag ${profile.filters.types.some(f => f.type === id) ? 'on' : ''}`} onClick={() => handleAddType(id)}>
+              {label}
             </div>
           ))}
         </div>

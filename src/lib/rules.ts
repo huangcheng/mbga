@@ -1,4 +1,4 @@
-import type { Profile } from './types'
+import type { Profile, ContentType } from './types'
 import { detectContentType } from '../contents/filters/type-filter'
 import { shouldBlockByKeyword } from '../contents/filters/keyword-filter'
 import { extractVideoId, extractCreatorId } from '../contents/filters/id-filter'
@@ -8,6 +8,7 @@ export interface ContentData {
   title: string
   author: string
   element: HTMLElement
+  badgeType?: ContentType | null
 }
 
 export interface EvaluationResult {
@@ -29,7 +30,8 @@ export function evaluateContent(
   const { filters } = profile
 
   // 1. Check type filter (fastest - URL pattern matching)
-  const contentType = detectContentType(content.url)
+  // First check badge type, then URL-based detection
+  const contentType = content.badgeType || detectContentType(content.url)
   if (contentType) {
     const typeMatch = filters.types.find(
       f => f.enabled && f.type === contentType

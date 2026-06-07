@@ -19,7 +19,7 @@ export interface IDFilter {
   enabled: boolean
 }
 
-export type ContentType = 'video' | 'live' | 'course' | 'bangumi' | 'article' | 'dynamic' | 'ad'
+export type ContentType = 'video' | 'live' | 'course' | 'bangumi' | 'article' | 'dynamic' | 'ad' | 'esports' | 'variety'
 
 export type MatchTarget = 'title' | 'description' | 'tags' | 'author'
 
