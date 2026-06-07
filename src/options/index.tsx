@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { StorageManager } from '../lib/storage'
+import { importBilibiliBlacklist } from '../lib/bilibili-api'
 import type { Profile } from '../lib/types'
 import './style.css'
 
@@ -10,6 +11,8 @@ function OptionsPage() {
   const [newKeyword, setNewKeyword] = useState('')
   const [newId, setNewId] = useState('')
   const [idType, setIdType] = useState<'video' | 'creator'>('creator')
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<string | null>(null)
 
   useEffect(() => { loadProfile() }, [])
 
@@ -50,6 +53,21 @@ function OptionsPage() {
     if (type === 'keyword') await storage.deleteKeywordFilter(id)
     if (type === 'id') await storage.deleteIDFilter(id)
     await loadProfile()
+  }
+
+  const handleImportBlacklist = async () => {
+    setImporting(true)
+    setImportResult(null)
+    
+    try {
+      const result = await importBilibiliBlacklist()
+      setImportResult(`成功导入 ${result.imported} 个UP主（共 ${result.total} 个）`)
+      await loadProfile()
+    } catch (error) {
+      setImportResult(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`)
+    } finally {
+      setImporting(false)
+    }
   }
 
   if (!profile) return <div>Loading...</div>
@@ -108,6 +126,20 @@ function OptionsPage() {
           </select>
           <input value={newId} onChange={e => setNewId(e.target.value)} placeholder="输入ID或BV号..." />
           <button onClick={handleAddId}>添加</button>
+        </div>
+        <div className="import-section">
+          <button 
+            onClick={handleImportBlacklist} 
+            disabled={importing}
+            className="btn-import"
+          >
+            {importing ? '导入中...' : '从B站导入黑名单'}
+          </button>
+          {importResult && (
+            <div className={`import-result ${importResult.includes('成功') ? 'success' : 'error'}`}>
+              {importResult}
+            </div>
+          )}
         </div>
         <div className="items">
           {profile.filters.ids.map(f => (

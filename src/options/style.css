@@ -22,3 +22,24 @@
 .item .sub { color: #9499a0; font-size: 12px; margin-right: 8px; }
 .item .del { cursor: pointer; color: #9499a0; }
 .item .del:hover { color: #f66; }
+
+.import-section { margin-bottom: 16px; }
+.btn-import { 
+  padding: 10px 20px; 
+  background: #67c23a; 
+  color: #fff; 
+  border: none; 
+  border-radius: 8px; 
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn-import:hover { background: #5daf34; }
+.btn-import:disabled { background: #a0c98a; cursor: not-allowed; }
+.import-result { 
+  margin-top: 8px; 
+  padding: 8px 12px; 
+  border-radius: 6px; 
+  font-size: 13px;
+}
+.import-result.success { background: #f0f9eb; color: #67c23a; }
+.import-result.error { background: #fef0f0; color: #f56c6c; }
