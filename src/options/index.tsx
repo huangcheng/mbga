@@ -9,8 +9,8 @@ const storage = new StorageManager()
 function OptionsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [newKeyword, setNewKeyword] = useState('')
-  const [newId, setNewId] = useState('')
-  const [idType, setIdType] = useState<'video' | 'creator'>('creator')
+  const [newCreatorId, setNewCreatorId] = useState('')
+  const [newVideoId, setNewVideoId] = useState('')
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<string | null>(null)
 
@@ -41,10 +41,17 @@ function OptionsPage() {
     await loadProfile()
   }
 
-  const handleAddId = async () => {
-    if (!newId) return
-    await storage.addIDFilter({ targetId: newId, type: idType, enabled: true })
-    setNewId('')
+  const handleAddCreator = async () => {
+    if (!newCreatorId) return
+    await storage.addIDFilter({ targetId: newCreatorId, type: 'creator', enabled: true })
+    setNewCreatorId('')
+    await loadProfile()
+  }
+
+  const handleAddVideo = async () => {
+    if (!newVideoId) return
+    await storage.addIDFilter({ targetId: newVideoId, type: 'video', enabled: true })
+    setNewVideoId('')
     await loadProfile()
   }
 
@@ -118,14 +125,10 @@ function OptionsPage() {
         </div>
       </div>
       <div className="card">
-        <h3>UP主 / 视频黑名单</h3>
+        <h3>UP主黑名单</h3>
         <div className="input-row">
-          <select value={idType} onChange={e => setIdType(e.target.value as any)}>
-            <option value="creator">UP主</option>
-            <option value="video">视频</option>
-          </select>
-          <input value={newId} onChange={e => setNewId(e.target.value)} placeholder="输入ID或BV号..." />
-          <button onClick={handleAddId}>添加</button>
+          <input value={newCreatorId} onChange={e => setNewCreatorId(e.target.value)} placeholder="输入UP主ID..." />
+          <button onClick={handleAddCreator}>添加</button>
         </div>
         <div className="import-section">
           <button 
@@ -142,9 +145,24 @@ function OptionsPage() {
           )}
         </div>
         <div className="items">
-          {profile.filters.ids.map(f => (
+          {profile.filters.ids.filter(f => f.type === 'creator').map(f => (
             <div key={f.id} className="item">
-              <span><span className="sub">{f.type === 'creator' ? 'UP主' : 'BV'}</span>{f.targetId}</span>
+              <span><span className="sub">UP主</span>{f.targetId}</span>
+              <span className="del" onClick={() => handleDelete('id', f.id)}>×</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="card">
+        <h3>视频黑名单</h3>
+        <div className="input-row">
+          <input value={newVideoId} onChange={e => setNewVideoId(e.target.value)} placeholder="输入BV号..." />
+          <button onClick={handleAddVideo}>添加</button>
+        </div>
+        <div className="items">
+          {profile.filters.ids.filter(f => f.type === 'video').map(f => (
+            <div key={f.id} className="item">
+              <span><span className="sub">BV</span>{f.targetId}</span>
               <span className="del" onClick={() => handleDelete('id', f.id)}>×</span>
             </div>
           ))}
