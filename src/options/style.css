@@ -2,21 +2,88 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg-primary: #18191c;
-  --bg-card: #212224;
-  --bg-surface: #2b2c30;
-  --bg-hover: #252629;
-  --text-primary: #e3e5e7;
-  --text-secondary: #9499a0;
-  --border-subtle: rgba(255, 255, 255, 0.04);
-  --border-hover: rgba(255, 255, 255, 0.08);
+/* Light theme */
+:root,
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f6f7;
+  --bg-tertiary: #eef0f2;
+  --bg-card: #f5f6f7;
+  --bg-surface: #eef0f2;
+  --bg-hover: #e8eaec;
+  --text-primary: #18191c;
+  --text-secondary: #61666d;
+  --text-tertiary: #9499a0;
+  --border: #e3e5e7;
+  --border-hover: #d0d3d6;
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --accent: #00a1d6;
+  --accent-light: #e8f4fd;
+  --accent-hover: #0091c2;
   --blue-primary: #00a1d6;
   --blue-light: #00c4e6;
   --pink: #fb7299;
   --green: #67c23a;
   --orange: #f5a623;
   --red: #f56c6c;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --bg-primary: #18191c;
+  --bg-secondary: #212224;
+  --bg-tertiary: #2b2c30;
+  --bg-card: #212224;
+  --bg-surface: #2b2c30;
+  --bg-hover: #252629;
+  --text-primary: #e3e5e7;
+  --text-secondary: #9499a0;
+  --text-tertiary: #61666d;
+  --border: #2b2c30;
+  --border-hover: #3a3b3f;
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --accent: #00a1d6;
+  --accent-light: rgba(0, 161, 214, 0.15);
+  --accent-hover: #00b8e6;
+  --blue-primary: #00a1d6;
+  --blue-light: #00c4e6;
+  --pink: #fb7299;
+  --green: #67c23a;
+  --orange: #f5a623;
+  --red: #f56c6c;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* System theme - uses light/dark based on OS preference */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --bg-primary: #18191c;
+    --bg-secondary: #212224;
+    --bg-tertiary: #2b2c30;
+    --bg-card: #212224;
+    --bg-surface: #2b2c30;
+    --bg-hover: #252629;
+    --text-primary: #e3e5e7;
+    --text-secondary: #9499a0;
+    --text-tertiary: #61666d;
+    --border: #2b2c30;
+    --border-hover: #3a3b3f;
+    --border-subtle: rgba(255, 255, 255, 0.04);
+    --accent: #00a1d6;
+    --accent-light: rgba(0, 161, 214, 0.15);
+    --accent-hover: #00b8e6;
+    --blue-primary: #00a1d6;
+    --blue-light: #00c4e6;
+    --pink: #fb7299;
+    --green: #67c23a;
+    --orange: #f5a623;
+    --red: #f56c6c;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
 }
 
 body {
@@ -25,6 +92,7 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease-out, color 0.2s ease-out;
 }
 
 /* Loading State */
@@ -140,7 +208,7 @@ body {
   padding: 24px;
   margin-bottom: 16px;
   border: 1px solid var(--border-subtle);
-  transition: border-color 0.2s ease-out;
+  transition: border-color 0.2s ease-out, background-color 0.2s ease-out;
 }
 
 .card:hover {
@@ -184,11 +252,70 @@ body {
   color: var(--orange);
 }
 
+.card-icon.settings-icon {
+  background: rgba(148, 153, 160, 0.1);
+  color: var(--text-secondary);
+}
+
 .card h3 {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
+}
+
+/* Theme Switch in Options */
+.theme-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.theme-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.theme-switch {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-surface);
+  border-radius: 20px;
+  padding: 2px;
+  width: fit-content;
+  border: 1px solid var(--border-subtle);
+}
+
+.theme-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 18px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: all 0.2s ease-out;
+}
+
+.theme-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.theme-btn.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 161, 214, 0.25);
+}
+
+.theme-btn.active:hover {
+  background: var(--accent-hover);
 }
 
 /* Tags */

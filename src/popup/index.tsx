@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
+import { applyTheme, listenToSystemThemeChanges, type Theme } from '../lib/theme'
 import './style.css'
 
 function IndexPopup() {
   const [enabled, setEnabled] = useState(true)
   const [pauseUntil, setPauseUntil] = useState<number | null>(null)
   const [stats, setStats] = useState({ totalBlocked: 0, blockedToday: 0 })
+  const [theme, setTheme] = useState<Theme>('system')
 
   useEffect(() => {
     chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (settings) => {
@@ -13,10 +15,22 @@ function IndexPopup() {
         setPauseUntil(settings.pauseUntil)
       }
     })
-    chrome.storage.local.get(['stats'], (result) => {
+    chrome.storage.local.get(['stats', 'theme'], (result) => {
       if (result.stats) setStats(result.stats)
+      const savedTheme = result.theme || 'system'
+      setTheme(savedTheme)
+      applyTheme(savedTheme)
     })
   }, [])
+
+  // Listen for system theme changes when theme is set to 'system'
+  useEffect(() => {
+    if (theme !== 'system') return
+    const unsubscribe = listenToSystemThemeChanges(() => {
+      applyTheme('system')
+    })
+    return unsubscribe
+  }, [theme])
 
   const handleToggle = () => {
     const newEnabled = !enabled
@@ -28,6 +42,12 @@ function IndexPopup() {
     const until = Date.now() + minutes * 60000
     setPauseUntil(until)
     chrome.runtime.sendMessage({ type: 'UPDATE_SETTINGS', settings: { pauseUntil: until } })
+  }
+
+  const handleThemeChange = (newTheme: Theme) => {
+    setTheme(newTheme)
+    applyTheme(newTheme)
+    chrome.storage.local.set({ theme: newTheme })
   }
 
   const isPaused = pauseUntil && Date.now() < pauseUntil
@@ -47,6 +67,45 @@ function IndexPopup() {
             <div className="logo-text">MBGA</div>
             <div className="logo-sub">Make Bilibili Great Again</div>
           </div>
+        </div>
+        <div className="theme-switch">
+          <button
+            className={`theme-btn ${theme === 'system' ? 'active' : ''}`}
+            onClick={() => handleThemeChange('system')}
+            title="跟随系统"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </button>
+          <button
+            className={`theme-btn ${theme === 'light' ? 'active' : ''}`}
+            onClick={() => handleThemeChange('light')}
+            title="浅色模式"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <button
+            className={`theme-btn ${theme === 'dark' ? 'active' : ''}`}
+            onClick={() => handleThemeChange('dark')}
+            title="深色模式"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </button>
         </div>
         <div className={`switch ${enabled ? 'on' : ''}`} onClick={handleToggle} role="switch" aria-checked={enabled}>
           <div className="switch-knob" />
