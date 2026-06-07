@@ -24,7 +24,13 @@ toastStyle.textContent = `
 `
 document.head?.appendChild(toastStyle)
 
-const storage = new StorageManager()
+let storage: StorageManager | null = null
+try {
+  storage = new StorageManager()
+} catch (e) {
+  console.warn('[MBGA] Extension context invalidated, please refresh the page')
+}
+
 let isProcessing = false
 
 // Hide feed initially to prevent content flash
@@ -51,65 +57,76 @@ function showFeed(): void {
 
 // Process a single video card
 async function processCard(card: HTMLElement): Promise<void> {
-  const settings = await storage.getSettings()
-  if (!settings.enabled) return
+  if (!storage) return
+  
+  try {
+    const settings = await storage.getSettings()
+    if (!settings.enabled) return
 
-  // Check if paused
-  if (settings.pauseUntil && Date.now() < settings.pauseUntil) return
+    // Check if paused
+    if (settings.pauseUntil && Date.now() < settings.pauseUntil) return
 
-  const profile = await storage.getProfile()
-  const links = card.querySelectorAll('a[href]')
-  let url = ''
-  let title = ''
-  let author = ''
+    const profile = await storage.getProfile()
+    const links = card.querySelectorAll('a[href]')
+    let url = ''
+    let title = ''
+    let author = ''
 
-  links.forEach(link => {
-    const href = link.getAttribute('href') || ''
-    // Handle both absolute and protocol-relative URLs
-    const fullUrl = href.startsWith('//') ? `https:${href}` : href
-    
-    // Match video URLs
-    if (fullUrl.includes('bilibili.com/video/')) {
-      url = fullUrl
+    links.forEach(link => {
+      const href = link.getAttribute('href') || ''
+      // Handle both absolute and protocol-relative URLs
+      const fullUrl = href.startsWith('//') ? `https:${href}` : href
+      
+      // Match video URLs
+      if (fullUrl.includes('bilibili.com/video/')) {
+        url = fullUrl
+      }
+      // Match live stream URLs
+      else if (fullUrl.includes('live.bilibili.com')) {
+        url = fullUrl
+      }
+      // Match ad URLs (cm.bilibili.com)
+      else if (fullUrl.includes('cm.bilibili.com')) {
+        url = fullUrl
+      }
+    })
+
+    // Detect badge type (赛事, 综艺, etc.)
+    const badgeEl = card.querySelector('.floor-title, .badge span')
+    const badgeText = badgeEl?.textContent?.trim() || ''
+    const badgeType = BADGE_TYPE_MAP[badgeText] || null
+
+    // Also detect live streams by card content
+    const cardText = card.textContent || ''
+    const hasLiveIndicator = cardText.includes('直播中') || 
+                             card.querySelector('[class*="live-tag"]') !== null
+
+    const titleEl = card.querySelector(SELECTORS.VIDEO_TITLE)
+    const authorEl = card.querySelector(SELECTORS.VIDEO_AUTHOR)
+    title = titleEl?.textContent?.trim() || ''
+    author = authorEl?.textContent?.trim() || ''
+
+    // Debug logging
+    const filterCount = profile.filters.types.length + profile.filters.keywords.length + profile.filters.ids.length
+    const isAd = url.includes('cm.bilibili.com')
+    if (url || title || hasLiveIndicator || badgeType) {
+      console.log(`[MBGA] Card: url=${url?.substring(0, 60)}, title=${title?.substring(0, 30)}, live=${hasLiveIndicator}, ad=${isAd}, badge=${badgeType}, filters=${filterCount}`)
     }
-    // Match live stream URLs
-    else if (fullUrl.includes('live.bilibili.com')) {
-      url = fullUrl
+
+    const result = evaluateContent({ url, title, author, element: card, badgeType }, profile)
+
+    if (result.blocked) {
+      console.log(`[MBGA] BLOCKED: ${result.reason}`)
+      applyBlockOverlay(card, result.reason || 'Blocked by MBGA')
+      await storage.incrementStats(result.filterType || 'unknown')
     }
-    // Match ad URLs (cm.bilibili.com)
-    else if (fullUrl.includes('cm.bilibili.com')) {
-      url = fullUrl
+  } catch (error) {
+    // Silently handle extension context errors
+    if (error instanceof Error && error.message.includes('Extension context invalidated')) {
+      console.warn('[MBGA] Extension context invalidated, please refresh the page')
+      return
     }
-  })
-
-  // Detect badge type (赛事, 综艺, etc.)
-  const badgeEl = card.querySelector('.floor-title, .badge span')
-  const badgeText = badgeEl?.textContent?.trim() || ''
-  const badgeType = BADGE_TYPE_MAP[badgeText] || null
-
-  // Also detect live streams by card content
-  const cardText = card.textContent || ''
-  const hasLiveIndicator = cardText.includes('直播中') || 
-                           card.querySelector('[class*="live-tag"]') !== null
-
-  const titleEl = card.querySelector(SELECTORS.VIDEO_TITLE)
-  const authorEl = card.querySelector(SELECTORS.VIDEO_AUTHOR)
-  title = titleEl?.textContent?.trim() || ''
-  author = authorEl?.textContent?.trim() || ''
-
-  // Debug logging
-  const filterCount = profile.filters.types.length + profile.filters.keywords.length + profile.filters.ids.length
-  const isAd = url.includes('cm.bilibili.com')
-  if (url || title || hasLiveIndicator || badgeType) {
-    console.log(`[MBGA] Card: url=${url?.substring(0, 60)}, title=${title?.substring(0, 30)}, live=${hasLiveIndicator}, ad=${isAd}, badge=${badgeType}, filters=${filterCount}`)
-  }
-
-  const result = evaluateContent({ url, title, author, element: card, badgeType }, profile)
-
-  if (result.blocked) {
-    console.log(`[MBGA] BLOCKED: ${result.reason}`)
-    applyBlockOverlay(card, result.reason || 'Blocked by MBGA')
-    await storage.incrementStats(result.filterType || 'unknown')
+    console.error('[MBGA] Error processing card:', error)
   }
 }
 
