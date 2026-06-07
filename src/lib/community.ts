@@ -1,4 +1,6 @@
-const API_BASE = 'https://mbga-edge.your-subdomain.workers.dev' // TODO: Configure
+// API URL - configure when Cloudflare Worker is deployed
+// Leave empty to disable community sync
+const API_BASE = '' // e.g., 'https://mbga-edge.workers.dev'
 
 interface BlacklistEntry {
   id: string
@@ -67,6 +69,12 @@ export class CommunityListClient {
   }
 
   async sync(): Promise<void> {
+    // Skip sync if API is not configured
+    if (!API_BASE) {
+      console.log('[MBGA] Community sync disabled (API not configured)')
+      return
+    }
+
     try {
       // Fetch blacklist
       const blacklistRes = await fetch(`${API_BASE}/v1/blacklist?limit=10000`)
