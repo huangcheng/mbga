@@ -6,6 +6,71 @@ import './style.css'
 
 const storage = new StorageManager()
 
+const contentTypes = [
+  { id: 'video', label: '视频', icon: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="5 3 19 12 5 21 5 3"/>
+    </svg>
+  )},
+  { id: 'live', label: '直播', icon: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 7l-7 5 7 5V7z"/>
+      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+    </svg>
+  )},
+  { id: 'course', label: '课堂', icon: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+    </svg>
+  )},
+  { id: 'bangumi', label: '番剧', icon: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+      <line x1="7" y1="2" x2="7" y2="22"/>
+      <line x1="17" y1="2" x2="17" y2="22"/>
+      <line x1="2" y1="12" x2="22" y2="12"/>
+      <line x1="2" y1="7" x2="7" y2="7"/>
+      <line x1="2" y1="17" x2="7" y2="17"/>
+      <line x1="17" y1="17" x2="22" y2="17"/>
+      <line x1="17" y1="7" x2="22" y2="7"/>
+    </svg>
+  )},
+  { id: 'article', label: '专栏', icon: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+  )},
+  { id: 'dynamic', label: '动态', icon: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+  )},
+  { id: 'ad', label: '广告', icon: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+  )},
+  { id: 'esports', label: '赛事', icon: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="7"/>
+      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+    </svg>
+  )},
+  { id: 'variety', label: '综艺', icon: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polygon points="10 8 16 12 10 16 10 8"/>
+    </svg>
+  )},
+]
+
 function OptionsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [newKeyword, setNewKeyword] = useState('')
@@ -22,13 +87,10 @@ function OptionsPage() {
   }
 
   const handleAddType = async (type: string) => {
-    // Check if filter already exists
     const existingFilter = profile?.filters.types.find(f => f.type === type)
     if (existingFilter) {
-      // Toggle off - remove the filter
       await storage.deleteTypeFilter(existingFilter.id)
     } else {
-      // Toggle on - add the filter
       await storage.addTypeFilter({ type: type as any, enabled: true })
     }
     await loadProfile()
@@ -77,58 +139,128 @@ function OptionsPage() {
     }
   }
 
-  if (!profile) return <div>Loading...</div>
+  if (!profile) return (
+    <div className="options-loading">
+      <div className="loading-spinner" />
+      <span>加载中...</span>
+    </div>
+  )
 
   return (
     <div className="options">
       <div className="page-head">
-        <h1>Make Bilibili Great Again</h1>
-        <p>管理你的过滤规则</p>
+        <div className="page-head-logo">
+          <div className="page-head-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div>
+            <h1>Make Bilibili Great Again</h1>
+            <p>管理你的过滤规则</p>
+          </div>
+        </div>
       </div>
       <div className="tabs">
         <div className="tab active">过滤规则</div>
         <div className="tab">导入导出</div>
       </div>
+      
       <div className="card">
-        <h3>屏蔽内容类型</h3>
+        <div className="card-header">
+          <div className="card-icon type-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          </div>
+          <h3>屏蔽内容类型</h3>
+        </div>
         <div className="tags">
-          {[
-            { id: 'video', label: '视频' },
-            { id: 'live', label: '直播' },
-            { id: 'course', label: '课堂' },
-            { id: 'bangumi', label: '番剧' },
-            { id: 'article', label: '专栏' },
-            { id: 'dynamic', label: '动态' },
-            { id: 'ad', label: '广告' },
-            { id: 'esports', label: '赛事' },
-            { id: 'variety', label: '综艺' },
-          ].map(({ id, label }) => (
-            <div key={id} className={`tag ${profile.filters.types.some(f => f.type === id) ? 'on' : ''}`} onClick={() => handleAddType(id)}>
+          {contentTypes.map(({ id, label, icon }) => (
+            <div 
+              key={id} 
+              className={`tag ${profile.filters.types.some(f => f.type === id) ? 'on' : ''}`} 
+              onClick={() => handleAddType(id)}
+            >
+              {icon}
               {label}
             </div>
           ))}
         </div>
       </div>
+      
       <div className="card">
-        <h3>关键词屏蔽</h3>
+        <div className="card-header">
+          <div className="card-icon keyword-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <h3>关键词屏蔽</h3>
+        </div>
         <div className="input-row">
-          <input value={newKeyword} onChange={e => setNewKeyword(e.target.value)} placeholder="输入关键词..." />
-          <button onClick={handleAddKeyword}>添加</button>
+          <input 
+            value={newKeyword} 
+            onChange={e => setNewKeyword(e.target.value)} 
+            placeholder="输入关键词..."
+            onKeyDown={e => e.key === 'Enter' && handleAddKeyword()}
+          />
+          <button onClick={handleAddKeyword}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            添加
+          </button>
         </div>
         <div className="items">
           {profile.filters.keywords.map(f => (
             <div key={f.id} className="item">
-              <span>{f.keyword}</span>
-              <span className="del" onClick={() => handleDelete('keyword', f.id)}>×</span>
+              <span className="item-text">{f.keyword}</span>
+              <button className="del" onClick={() => handleDelete('keyword', f.id)} aria-label="删除">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
             </div>
           ))}
+          {profile.filters.keywords.length === 0 && (
+            <div className="empty-state">暂无关键词过滤规则</div>
+          )}
         </div>
       </div>
+      
       <div className="card">
-        <h3>UP主黑名单</h3>
+        <div className="card-header">
+          <div className="card-icon creator-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <h3>UP主黑名单</h3>
+        </div>
         <div className="input-row">
-          <input value={newCreatorId} onChange={e => setNewCreatorId(e.target.value)} placeholder="输入UP主ID..." />
-          <button onClick={handleAddCreator}>添加</button>
+          <input 
+            value={newCreatorId} 
+            onChange={e => setNewCreatorId(e.target.value)} 
+            placeholder="输入UP主ID..."
+            onKeyDown={e => e.key === 'Enter' && handleAddCreator()}
+          />
+          <button onClick={handleAddCreator}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            添加
+          </button>
         </div>
         <div className="import-section">
           <button 
@@ -136,10 +268,35 @@ function OptionsPage() {
             disabled={importing}
             className="btn-import"
           >
-            {importing ? '导入中...' : '从B站导入黑名单'}
+            {importing ? (
+              <>
+                <div className="btn-spinner" />
+                导入中...
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                从B站导入黑名单
+              </>
+            )}
           </button>
           {importResult && (
             <div className={`import-result ${importResult.includes('成功') ? 'success' : 'error'}`}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                {importResult.includes('成功') ? (
+                  <polyline points="20 6 9 17 4 12"/>
+                ) : (
+                  <>
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                  </>
+                )}
+              </svg>
               {importResult}
             </div>
           )}
@@ -147,25 +304,73 @@ function OptionsPage() {
         <div className="items">
           {profile.filters.ids.filter(f => f.type === 'creator').map(f => (
             <div key={f.id} className="item">
-              <span><span className="sub">UP主</span>{f.targetId}</span>
-              <span className="del" onClick={() => handleDelete('id', f.id)}>×</span>
+              <span className="item-text">
+                <span className="sub">UP主</span>
+                {f.targetId}
+              </span>
+              <button className="del" onClick={() => handleDelete('id', f.id)} aria-label="删除">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
             </div>
           ))}
+          {profile.filters.ids.filter(f => f.type === 'creator').length === 0 && (
+            <div className="empty-state">暂无UP主黑名单</div>
+          )}
         </div>
       </div>
+      
       <div className="card">
-        <h3>视频黑名单</h3>
+        <div className="card-header">
+          <div className="card-icon video-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+              <line x1="7" y1="2" x2="7" y2="22"/>
+              <line x1="17" y1="2" x2="17" y2="22"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <line x1="2" y1="7" x2="7" y2="7"/>
+              <line x1="2" y1="17" x2="7" y2="17"/>
+              <line x1="17" y1="17" x2="22" y2="17"/>
+              <line x1="17" y1="7" x2="22" y2="7"/>
+            </svg>
+          </div>
+          <h3>视频黑名单</h3>
+        </div>
         <div className="input-row">
-          <input value={newVideoId} onChange={e => setNewVideoId(e.target.value)} placeholder="输入BV号..." />
-          <button onClick={handleAddVideo}>添加</button>
+          <input 
+            value={newVideoId} 
+            onChange={e => setNewVideoId(e.target.value)} 
+            placeholder="输入BV号..."
+            onKeyDown={e => e.key === 'Enter' && handleAddVideo()}
+          />
+          <button onClick={handleAddVideo}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            添加
+          </button>
         </div>
         <div className="items">
           {profile.filters.ids.filter(f => f.type === 'video').map(f => (
             <div key={f.id} className="item">
-              <span><span className="sub">BV</span>{f.targetId}</span>
-              <span className="del" onClick={() => handleDelete('id', f.id)}>×</span>
+              <span className="item-text">
+                <span className="sub">BV</span>
+                {f.targetId}
+              </span>
+              <button className="del" onClick={() => handleDelete('id', f.id)} aria-label="删除">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
             </div>
           ))}
+          {profile.filters.ids.filter(f => f.type === 'video').length === 0 && (
+            <div className="empty-state">暂无视频黑名单</div>
+          )}
         </div>
       </div>
     </div>
