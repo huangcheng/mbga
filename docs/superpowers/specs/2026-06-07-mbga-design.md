@@ -318,10 +318,12 @@ interface StorageSchema {
 - [ ] Focus mode
 - [ ] Options page
 
-### Phase 4: Community Features
-- [ ] Community filter lists
-- [ ] Filter list format parsing
-- [ ] Auto-update via chrome.alarms
+### Phase 4: Community Features (Simplified)
+- [ ] Public blacklist API (single source)
+- [ ] Community list sync (6-hour, single endpoint)
+- [ ] Community report button
+- [ ] Public list page (/list)
+- [ ] Admin review queue
 
 ### Phase 5: Advanced (Post-v1)
 - [ ] AI cover analysis (with proper security)
@@ -342,7 +344,7 @@ interface StorageSchema {
 2. **SPA navigation:** Use MutationObserver to detect DOM changes. Bilibili uses pushState for navigation.
 3. **AI analysis:** Deferred to Phase 5. Requires proper security (API key encryption), thumbnail proxying, and cost controls.
 4. **Danmaku filtering:** Deferred to Phase 5. Requires WebSocket interception — fundamentally different tech.
-5. **Filter list conflicts:** Block-dominant merge. If ANY source says "block", content is blocked. User filters always take priority.
+5. **Community lists:** Single public source (no URL subscriptions). Extension syncs from `/v1/blacklist` every 6 hours.
 6. **Profile system:** Single profile for v1. Multi-profile deferred to Phase 3.
 
 ---
