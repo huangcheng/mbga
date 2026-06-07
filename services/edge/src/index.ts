@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { Database } from './db'
+import listApp from './pages/list'
 
 type Bindings = {
   DB: D1Database
@@ -11,6 +12,9 @@ const app = new Hono<{ Bindings: Bindings }>()
 
 // CORS
 app.use('*', cors())
+
+// Public list page
+app.route('/', listApp)
 
 // Public API
 app.get('/v1/blacklist', async (c) => {
