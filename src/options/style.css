@@ -571,6 +571,96 @@ body {
   border-color: rgba(245, 108, 108, 0.15);
 }
 
+/* Card Description */
+.card-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+/* Export Button */
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--blue-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-export:hover {
+  background: var(--blue-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 161, 214, 0.3);
+}
+
+.btn-export:active {
+  transform: translateY(0);
+}
+
+/* Import Button */
+.btn-import {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-import:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.btn-import:active {
+  transform: translateY(0);
+}
+
+/* Import Bilibili Button */
+.btn-import-bilibili {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-import-bilibili:hover {
+  background: #5daf34;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
+}
+
+.btn-import-bilibili:disabled {
+  background: var(--bg-surface);
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 6px;

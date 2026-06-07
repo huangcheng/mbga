@@ -74,6 +74,7 @@ const contentTypes = [
 
 function OptionsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [activeTab, setActiveTab] = useState<'filters' | 'import-export'>('filters')
   const [newKeyword, setNewKeyword] = useState('')
   const [newCreatorId, setNewCreatorId] = useState('')
   const [newVideoId, setNewVideoId] = useState('')
@@ -164,6 +165,37 @@ function OptionsPage() {
     chrome.storage.local.set({ theme: newTheme })
   }
 
+  const handleExport = async () => {
+    try {
+      const data = await storage.exportData()
+      const blob = new Blob([data], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `mbga-backup-${new Date().toISOString().split('T')[0]}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Export failed:', error)
+    }
+  }
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const text = await file.text()
+      await storage.importData(text)
+      await loadProfile()
+      setImportResult('导入成功！')
+    } catch (error) {
+      setImportResult(`导入失败: ${error instanceof Error ? error.message : '文件格式错误'}`)
+    }
+    // Reset file input
+    e.target.value = ''
+  }
+
   if (!profile) return (
     <div className="options-loading">
       <div className="loading-spinner" />
@@ -189,11 +221,21 @@ function OptionsPage() {
         </div>
       </div>
       <div className="tabs">
-        <div className="tab active">过滤规则</div>
-        <div className="tab">导入导出</div>
+        <div 
+          className={`tab ${activeTab === 'filters' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('filters')}
+        >
+          过滤规则
+        </div>
+        <div 
+          className={`tab ${activeTab === 'import-export' ? 'active' : ''}`}
+          onClick={() => setActiveTab('import-export')}
+        >
+          导入导出
+        </div>
       </div>
       
-      {/* Theme Settings */}
+      {/* Theme Settings - Always visible */}
       <div className="card">
         <div className="card-header">
           <div className="card-icon settings-icon">
@@ -251,18 +293,21 @@ function OptionsPage() {
         </div>
       </div>
       
-      <div className="card">
-        <div className="card-header">
-          <div className="card-icon type-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
-            </svg>
-          </div>
-          <h3>屏蔽内容类型</h3>
-        </div>
+      {/* Filters Tab */}
+      {activeTab === 'filters' && (
+        <>
+          <div className="card">
+            <div className="card-header">
+              <div className="card-icon type-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="3" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+              </div>
+              <h3>屏蔽内容类型</h3>
+            </div>
         <div className="tags">
           {contentTypes.map(({ id, label, icon }) => (
             <div 
@@ -456,6 +501,94 @@ function OptionsPage() {
           )}
         </div>
       </div>
+        </>
+      )}
+
+      {/* Import/Export Tab */}
+      {activeTab === 'import-export' && (
+        <>
+          <div className="card">
+            <div className="card-header">
+              <div className="card-icon export-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </div>
+              <h3>导出数据</h3>
+            </div>
+            <p className="card-desc">导出你的过滤规则和设置为 JSON 文件，用于备份或分享。</p>
+            <button className="btn-export" onClick={handleExport}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              导出配置
+            </button>
+          </div>
+
+          <div className="card">
+            <div className="card-header">
+              <div className="card-icon import-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <h3>导入数据</h3>
+            </div>
+            <p className="card-desc">从 JSON 文件导入过滤规则和设置。这将覆盖当前配置。</p>
+            <label className="btn-import">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              选择文件导入
+              <input 
+                type="file" 
+                accept=".json" 
+                onChange={handleImport}
+                style={{ display: 'none' }}
+              />
+            </label>
+            {importResult && (
+              <div className={`import-result ${importResult.includes('成功') ? 'success' : 'error'}`}>
+                {importResult}
+              </div>
+            )}
+          </div>
+
+          <div className="card">
+            <div className="card-header">
+              <div className="card-icon bilibili-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                  <path d="M2 17l10 5 10-5"/>
+                  <path d="M2 12l10 5 10-5"/>
+                </svg>
+              </div>
+              <h3>从B站导入黑名单</h3>
+            </div>
+            <p className="card-desc">导入你在B站拉黑的UP主列表。需要登录B站账号。</p>
+            <button 
+              className="btn-import-bilibili" 
+              onClick={handleImportBlacklist}
+              disabled={importing}
+            >
+              {importing ? '导入中...' : '导入B站黑名单'}
+            </button>
+            {importResult && importResult.includes('UP主') && (
+              <div className="import-result success">
+                {importResult}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }
