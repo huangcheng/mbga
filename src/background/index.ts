@@ -1,4 +1,5 @@
 import { StorageManager } from '../lib/storage'
+import { CommunityListClient } from '../lib/community'
 
 const storage = new StorageManager()
 
@@ -25,5 +26,19 @@ chrome.runtime.onInstalled.addListener(async () => {
   const profile = await storage.getProfile()
   if (!profile) {
     console.log('MBGA installed with default settings')
+  }
+
+  // Create alarm for community list sync
+  chrome.alarms.create('mbga-community-sync', {
+    periodInMinutes: 360, // 6 hours
+  })
+})
+
+// Handle alarm for community list sync
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'mbga-community-sync') {
+    console.log('[MBGA] Syncing community lists...')
+    const client = new CommunityListClient()
+    await client.sync()
   }
 })

@@ -1,4 +1,5 @@
 import { StorageManager } from '../../lib/storage'
+import { addReportButton } from './report-button'
 
 const storage = new StorageManager()
 
@@ -93,6 +94,9 @@ function addMBGAOptions(panel: HTMLElement): void {
     )
     panel.appendChild(blockVideo)
   }
+
+  // Add report button
+  addReportButton(panel, card as HTMLElement)
 }
 
 /**

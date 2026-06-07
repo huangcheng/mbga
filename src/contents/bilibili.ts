@@ -1,5 +1,6 @@
 import type { PlasmoCSConfig } from 'plasmo'
 import { StorageManager } from '../lib/storage'
+import { CommunityListClient } from '../lib/community'
 import { evaluateContent } from '../lib/rules'
 import { SELECTORS, BADGE_TYPE_MAP } from '../lib/constants'
 import { applyBlockOverlay, removeBlockOverlay } from './ui/blur-overlay'
@@ -30,6 +31,8 @@ try {
 } catch (e) {
   console.warn('[MBGA] Extension context invalidated, please refresh the page')
 }
+
+let communityClient: CommunityListClient | null = null
 
 let isProcessing = false
 
@@ -111,6 +114,30 @@ async function processCard(card: HTMLElement): Promise<void> {
     const isAd = url.includes('cm.bilibili.com')
     if (url || title || hasLiveIndicator || badgeType) {
       console.log(`[MBGA] Card: url=${url?.substring(0, 60)}, title=${title?.substring(0, 30)}, live=${hasLiveIndicator}, ad=${isAd}, badge=${badgeType}, filters=${filterCount}`)
+    }
+
+    // Check community blacklist before local filters
+    if (communityClient) {
+      const videoId = extractVideoIdFromUrl(url)
+      const creatorId = extractCreatorIdFromElement(card)
+
+      if (videoId) {
+        const communityBlock = communityClient.isBlocked(videoId)
+        if (communityBlock && !communityClient.isWhitelisted(videoId)) {
+          console.log(`[MBGA] BLOCKED by community: ${videoId}`)
+          applyBlockOverlay(card, `Community: ${communityBlock.reasons.join(', ')}`)
+          return
+        }
+      }
+
+      if (creatorId) {
+        const communityBlock = communityClient.isBlocked(creatorId)
+        if (communityBlock && !communityClient.isWhitelisted(creatorId)) {
+          console.log(`[MBGA] BLOCKED by community: ${creatorId}`)
+          applyBlockOverlay(card, `Community: ${communityBlock.reasons.join(', ')}`)
+          return
+        }
+      }
     }
 
     const result = evaluateContent({ url, title, author, element: card, badgeType }, profile)
@@ -222,10 +249,32 @@ async function init(): Promise<void> {
     setupMutationObserver()
     console.log('[MBGA] Setting up quick block...')
     setupQuickBlock()
+    console.log('[MBGA] Initializing community lists...')
+    communityClient = new CommunityListClient()
+    await communityClient.init()
+    console.log(`[MBGA] Community lists loaded: ${communityClient.getBlacklistSize()} blacklist entries`)
     console.log('[MBGA] Initialization complete!')
   } catch (error) {
     console.error('[MBGA] Error during initialization:', error)
   }
+}
+
+/**
+ * Extract video ID from URL
+ */
+function extractVideoIdFromUrl(url: string): string | null {
+  const match = url.match(/\/video\/(BV[a-zA-Z0-9]+)/)
+  return match ? match[1] : null
+}
+
+/**
+ * Extract creator ID from card element
+ */
+function extractCreatorIdFromElement(element: HTMLElement): string | null {
+  const spaceLink = element.querySelector('a[href*="space.bilibili.com"]')
+  const href = spaceLink?.getAttribute('href') || ''
+  const match = href.match(/space\.bilibili\.com\/(\d+)/)
+  return match ? match[1] : null
 }
 
 init()
