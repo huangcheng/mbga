@@ -1,0 +1,171 @@
+import { StorageManager } from '../../lib/storage'
+import { extractVideoId, extractCreatorId } from '../../lib/storage'
+
+const storage = new StorageManager()
+
+/**
+ * Add MBGA options to Bilibili's "not interested" popup menu
+ */
+export function setupQuickBlock(): void {
+  // Watch for the popup appearing
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node instanceof HTMLElement) {
+          const popup = node.querySelector?.('.bili-video-card__info--no-interest-panel') 
+            || (node.classList?.contains('bili-video-card__info--no-interest-panel') ? node : null)
+          
+          if (popup) {
+            addMBGAOptions(popup as HTMLElement)
+          }
+        }
+      }
+    }
+  })
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  })
+}
+
+/**
+ * Add MBGA block options to the popup menu
+ */
+function addMBGAOptions(panel: HTMLElement): void {
+  // Find the parent card to get video/creator info
+  const card = panel.closest('.bili-video-card, .floor-single-card')
+  if (!card) return
+
+  // Get video URL
+  const link = card.querySelector('a[href*="bilibili.com/video/"], a[href*="live.bilibili.com"]')
+  const url = link?.getAttribute('href') || ''
+  const fullUrl = url.startsWith('//') ? `https:${url}` : url
+
+  // Get creator info
+  const authorEl = card.querySelector('.bili-video-card__info--author, .sub-title span')
+  const authorName = authorEl?.textContent?.trim() || ''
+
+  // Get creator ID from space link
+  const spaceLink = card.querySelector('a[href*="space.bilibili.com"]')
+  const spaceUrl = spaceLink?.getAttribute('href') || ''
+  const creatorId = extractCreatorIdFromUrl(spaceUrl)
+
+  // Get video ID
+  const videoId = extractVideoIdFromUrl(fullUrl)
+
+  // Check if already added
+  if (panel.querySelector('.mbga-quick-block')) return
+
+  // Add separator
+  const separator = document.createElement('div')
+  separator.style.cssText = 'height: 1px; background: #e3e5e7; margin: 4px 0;'
+  panel.appendChild(separator)
+
+  // Add "Block UP主" option
+  if (creatorId) {
+    const blockCreator = createMenuItem(
+      `🚫 屏蔽UP主: ${authorName}`,
+      () => handleBlockCreator(creatorId, authorName)
+    )
+    panel.appendChild(blockCreator)
+  }
+
+  // Add "Block 视频" option
+  if (videoId) {
+    const blockVideo = createMenuItem(
+      '🚫 屏蔽此视频',
+      () => handleBlockVideo(videoId)
+    )
+    panel.appendChild(blockVideo)
+  }
+}
+
+/**
+ * Create a menu item element
+ */
+function createMenuItem(text: string, onClick: () => void): HTMLElement {
+  const item = document.createElement('div')
+  item.className = 'bili-video-card__info--no-interest-panel--item mbga-quick-block'
+  item.textContent = text
+  item.style.cssText = 'cursor: pointer; padding: 8px 12px; font-size: 12px;'
+  item.addEventListener('click', (e) => {
+    e.stopPropagation()
+    e.preventDefault()
+    onClick()
+  })
+  return item
+}
+
+/**
+ * Handle blocking a creator
+ */
+async function handleBlockCreator(creatorId: string, name: string): Promise<void> {
+  try {
+    await storage.addIDFilter({
+      targetId: creatorId,
+      type: 'creator',
+      enabled: true
+    })
+    showToast(`已屏蔽UP主: ${name}`)
+  } catch (error) {
+    showToast('屏蔽失败', 'error')
+  }
+}
+
+/**
+ * Handle blocking a video
+ */
+async function handleBlockVideo(videoId: string): Promise<void> {
+  try {
+    await storage.addIDFilter({
+      targetId: videoId,
+      type: 'video',
+      enabled: true
+    })
+    showToast(`已屏蔽视频: ${videoId}`)
+  } catch (error) {
+    showToast('屏蔽失败', 'error')
+  }
+}
+
+/**
+ * Show a toast notification
+ */
+function showToast(message: string, type: 'success' | 'error' = 'success'): void {
+  const toast = document.createElement('div')
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background: ${type === 'success' ? '#67c23a' : '#f56c6c'};
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 99999;
+    animation: mbga-toast 3s ease-in-out;
+  `
+  toast.textContent = message
+  document.body.appendChild(toast)
+
+  setTimeout(() => {
+    toast.remove()
+  }, 3000)
+}
+
+/**
+ * Extract creator ID from space URL
+ */
+function extractCreatorIdFromUrl(url: string): string | null {
+  const match = url.match(/space\.bilibili\.com\/(\d+)/)
+  return match ? match[1] : null
+}
+
+/**
+ * Extract video ID from URL
+ */
+function extractVideoIdFromUrl(url: string): string | null {
+  const match = url.match(/\/video\/(BV[a-zA-Z0-9]+)/)
+  return match ? match[1] : null
+}

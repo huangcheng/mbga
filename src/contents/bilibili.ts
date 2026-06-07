@@ -3,6 +3,7 @@ import { StorageManager } from '../lib/storage'
 import { evaluateContent } from '../lib/rules'
 import { SELECTORS, BADGE_TYPE_MAP } from '../lib/constants'
 import { applyBlockOverlay, removeBlockOverlay } from './ui/blur-overlay'
+import { setupQuickBlock } from './ui/quick-block'
 
 export const config: PlasmoCSConfig = {
   matches: ['https://*.bilibili.com/*'],
@@ -10,6 +11,18 @@ export const config: PlasmoCSConfig = {
 }
 
 console.log('[MBGA] Content script loaded!')
+
+// Add toast animation CSS
+const toastStyle = document.createElement('style')
+toastStyle.textContent = `
+  @keyframes mbga-toast {
+    0% { opacity: 0; transform: translateY(-20px); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
+  }
+`
+document.head?.appendChild(toastStyle)
 
 const storage = new StorageManager()
 let isProcessing = false
@@ -190,6 +203,8 @@ async function init(): Promise<void> {
     await processAllCards()
     console.log('[MBGA] Cards processed, setting up observer...')
     setupMutationObserver()
+    console.log('[MBGA] Setting up quick block...')
+    setupQuickBlock()
     console.log('[MBGA] Initialization complete!')
   } catch (error) {
     console.error('[MBGA] Error during initialization:', error)
