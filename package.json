@@ -4,6 +4,13 @@
   "version": "0.0.1",
   "description": "A browser extension that filters Bilibili content by type, keyword, and creator ID",
   "author": "MBGA Team",
+  "icon": {
+    "16": "src/assets/icon-16.png",
+    "32": "src/assets/icon-32.png",
+    "48": "src/assets/icon-48.png",
+    "64": "src/assets/icon-64.png",
+    "128": "src/assets/icon-128.png"
+  },
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
